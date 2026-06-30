@@ -29,6 +29,9 @@ func _physics_process(delta: float) -> void:
 	if direction != Vector3.ZERO:
 		direction = direction.normalized()
 		$Pivot.basis = Basis.looking_at(direction)
+		$AnimationPlayer.speed_scale = 1.5
+	else:
+		$AnimationPlayer.speed_scale = 0.5
 
 	# ground velocity
 	target_velocity.x = direction.x * speed
@@ -37,13 +40,8 @@ func _physics_process(delta: float) -> void:
 	if not is_on_floor():
 		target_velocity.y = target_velocity.y - (fall_acceleration * delta)
 
-	# Moving the Character
-	velocity = target_velocity
-
 	if is_on_floor() and Input.is_action_just_pressed("jump"):
 		target_velocity.y = jump_impulse
-
-	move_and_slide()
 
 	# Iterate through all collisions that occurred this frame
 	for index in range(get_slide_collision_count()):
@@ -61,11 +59,19 @@ func _physics_process(delta: float) -> void:
 		# If the collider is with a mob
 		if (collision.get_collider() as Node).is_in_group("mob"):
 			var mob = collision.get_collider()
+			#print("collision %s" % Vector3.UP.dot(collision.get_normal()))
 			# we check that we are hitting it from above.
 			if Vector3.UP.dot(collision.get_normal()) > 0.6:
 				mob.squash()
 				target_velocity.y = bounce_impulse
 				break
+
+	# Moving the Character
+	velocity = target_velocity
+	move_and_slide()
+
+	# make the character arc when jumping
+	$Pivot.rotation.x = PI / 6 * velocity.y / jump_impulse
 
 
 func die():
